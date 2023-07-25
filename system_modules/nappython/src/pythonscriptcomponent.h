@@ -48,15 +48,22 @@ namespace nap
         bool init(utility::ErrorState& errorState) override;
 
         ResourcePtr<PythonScript> mPythonScript = nullptr;  ///< property: 'PythonScript' Pointer to a python script resource that manages the script that contains the python class for this component.
+        ResourcePtr<PythonScript> mBackupPythonScript = nullptr;  ///< property: 'BackupPythonScript' Pointer to a python script resource that manages the script that contains the backup python class for this component.
+
         std::string mClassName;                             ///< property: 'Class' The name of the class defined in the python script
         std::vector<std::string> mDependencies;             ///< property: 'Dependencies' list of component types that need to be among this scripts siblings and that will be initialized before this component.
 
         // Inherited from Component
         virtual void getDependentComponents(std::vector<rtti::TypeInfo>& components) const override;
-
+        
+        bool hasBackup() { return mBackupLoaded; }
+        
     private:
         pybind11::module mModule;
         pybind11::object mPythonClass;
+        pybind11::object mBackupPythonClass;
+        bool mBackupLoaded = false;
+
     };
 
 
@@ -103,6 +110,8 @@ namespace nap
          */
         template <typename ...Args>
         bool call(const std::string& identifier, utility::ErrorState& errorState, Args&&... args);
+        
+        Signal<const std::string&> mPythonErrorCaught;
 
     private:
         PythonScriptComponent* mResource = nullptr;
@@ -124,6 +133,7 @@ namespace nap
         }
         catch (const pybind11::error_already_set& err)
         {
+            mPythonErrorCaught.trigger(err.what());
             errorState.fail("Runtime python error while executing %s: %s", mResource->mPythonScript->mPath.c_str(), err.what());
             return false;
         }
@@ -140,6 +150,7 @@ namespace nap
         }
         catch (const pybind11::error_already_set& err)
         {
+            mPythonErrorCaught.trigger(err.what());
             errorState.fail("Runtime python error while executing %s: %s", mResource->mPythonScript->mPath.c_str(), err.what());
             return false;
         }

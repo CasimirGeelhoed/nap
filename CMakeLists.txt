@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.18.4)
 project(NAP)
 
+# Enable python
+set(NAP_ENABLE_PYTHON 1)
+
 # Keep the current directory as project root
 set(NAP_ROOT ${CMAKE_CURRENT_LIST_DIR})
 message(STATUS "Using NAP Root: ${CMAKE_CURRENT_LIST_DIR}")

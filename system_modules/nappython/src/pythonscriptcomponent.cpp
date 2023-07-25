@@ -19,6 +19,7 @@ RTTI_END_CLASS
 
 RTTI_BEGIN_CLASS(nap::PythonScriptComponent)
     RTTI_PROPERTY("PythonScript", &nap::PythonScriptComponent::mPythonScript, nap::rtti::EPropertyMetaData::Required)
+    RTTI_PROPERTY("BackupPythonScript", &nap::PythonScriptComponent::mBackupPythonScript, nap::rtti::EPropertyMetaData::Default)
     RTTI_PROPERTY("Class", &nap::PythonScriptComponent::mClassName, nap::rtti::EPropertyMetaData::Required)
     RTTI_PROPERTY("Dependencies", &nap::PythonScriptComponent::mDependencies, nap::rtti::EPropertyMetaData::Default)
 RTTI_END_CLASS
@@ -63,8 +64,24 @@ namespace nap
 		catch (const pybind11::error_already_set& err)
 		{
 			errorState.fail("Runtime python error while constructing Component %s: %s", mResource->mClassName.c_str(), err.what());
-			return false;
-		}
+            mPythonErrorCaught.trigger(err.what());
+			
+            // try to load backup python class instead
+            if(!mResource->hasBackup())
+                return false;
+            
+            try
+            {
+                mInstance = mResource->mBackupPythonClass(getEntityInstance());
+            }
+            catch (const pybind11::error_already_set& err)
+            {
+                errorState.fail("Runtime python error in backup python class while constructing Component %s: %s", mResource->mClassName.c_str(), err.what());
+                mPythonErrorCaught.trigger(err.what());
+                return false;
+            }
+
+        }
 
         return true;
     }
@@ -89,7 +106,13 @@ namespace nap
         mPythonClass = mPythonScript->get(mClassName);
         if (mPythonClass.is_none())
             return false;
-            
+        
+        if(mBackupPythonScript != nullptr)
+        {
+            mBackupPythonClass = mBackupPythonScript->get(mClassName);
+            mBackupLoaded = true;
+        }
+        
         return true;
     }
 
