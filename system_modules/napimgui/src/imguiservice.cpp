@@ -310,7 +310,7 @@ namespace nap
 		style->WindowBorderSize = 0.0f;
 		style->PopupRounding = 0.0f;
 		style->ChildRounding = 0.0f;
-        style->WindowTitleAlign = { 0.5f, 0.5f };
+        style->WindowTitleAlign = { 0.0f, 0.5f };
 		style->PopupBorderSize = 0.0f;
 		style->TabRounding = 0.0f;
 
