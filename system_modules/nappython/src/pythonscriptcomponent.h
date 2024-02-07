@@ -112,6 +112,9 @@ namespace nap
         bool call(const std::string& identifier, utility::ErrorState& errorState, Args&&... args);
         
         Signal<const std::string&> mPythonErrorCaught;
+        
+        Signal<const std::string&> mPythonLogMessageReceived;
+
 
     private:
         PythonScriptComponent* mResource = nullptr;
